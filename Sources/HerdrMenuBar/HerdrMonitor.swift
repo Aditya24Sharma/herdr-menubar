@@ -37,6 +37,18 @@ final class HerdrMonitor: ObservableObject {
         self.notifier = notifier
     }
 
+    /// Seeds state without connecting, so the panel can be rendered offscreen
+    /// and inspected without a running Herdr server.
+    init(settings: Settings, notifier: Notifier,
+         agents: [Agent], workspaces: [Workspace], connected: Bool = true) {
+        self.settings = settings
+        self.notifier = notifier
+        self.agents = agents.sorted(by: Self.ordering)
+        self.workspaces = Dictionary(
+            uniqueKeysWithValues: workspaces.map { ($0.workspaceID, $0) })
+        self.isConnected = connected
+    }
+
     func start() {
         guard monitorThread == nil else { return }
         let thread = Thread { [weak self] in self?.runLoop() }
