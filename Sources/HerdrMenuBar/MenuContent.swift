@@ -27,7 +27,7 @@ struct MenuContent: View {
             Divider()
             footer
         }
-        .frame(width: 320)
+        .frame(width: 258)
     }
 
     private var header: some View {
