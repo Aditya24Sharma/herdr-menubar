@@ -12,22 +12,32 @@ struct MenuContent: View {
 
             if monitor.agents.isEmpty {
                 emptyState
+            } else if monitor.agents.count > Self.scrollThreshold {
+                ScrollView { agentList }.frame(height: 340)
             } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 10) {
-                        ForEach(monitor.agentsByWorkspace, id: \.workspace.id) { group in
-                            WorkspaceSection(workspace: group.workspace, agents: group.agents)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-                .frame(maxHeight: 360)
+                agentList
             }
 
             Divider()
             footer
         }
         .frame(width: 258)
+    }
+
+    /// Above this many agents the list scrolls instead of growing.
+    private static let scrollThreshold = 8
+
+    /// A ScrollView has no intrinsic height, and MenuBarExtra sizes its panel to
+    /// fit its content, so wrapping a short list in one collapses it to nothing.
+    /// Short lists are therefore laid out directly and only long ones scroll,
+    /// with an explicit height.
+    private var agentList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(monitor.agentsByWorkspace, id: \.workspace.id) { group in
+                WorkspaceSection(workspace: group.workspace, agents: group.agents)
+            }
+        }
+        .padding(.vertical, 8)
     }
 
     private var header: some View {
