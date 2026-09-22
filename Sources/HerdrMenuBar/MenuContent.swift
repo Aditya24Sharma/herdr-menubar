@@ -147,7 +147,7 @@ private struct AgentRow: View {
                     Text(agent.displayName)
                         .font(.system(size: 12, weight: .medium))
                         .lineLimit(1)
-                        .truncationMode(.middle)
+                        .truncationMode(.tail)
                     if let path = agent.displayPath {
                         Text(path)
                             .font(.system(size: 10))
@@ -156,10 +156,13 @@ private struct AgentRow: View {
                             .truncationMode(.head)
                     }
                 }
-                Spacer(minLength: 6)
+                // The name is the thing worth reading, so it wins the space.
+                .layoutPriority(1)
+                Spacer(minLength: 4)
                 Text(agent.status.label)
                     .font(.system(size: 10))
                     .foregroundStyle(agent.status == .blocked ? agent.status.color : .secondary)
+                    .fixedSize()
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
