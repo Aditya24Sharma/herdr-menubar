@@ -252,15 +252,6 @@ final class HerdrMonitor: ObservableObject {
         return .idle
     }
 
-    var badgeCount: Int {
-        switch summaryStatus {
-        case .blocked: return blockedCount
-        case .done: return doneCount
-        case .working: return workingCount
-        default: return 0
-        }
-    }
-
     var agentsByWorkspace: [(workspace: Workspace, agents: [Agent])] {
         Dictionary(grouping: agents, by: \.workspaceID)
             .map { id, agents in
