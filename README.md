@@ -5,10 +5,12 @@ session. Click an agent to jump straight to its pane.
 
 ## What it does
 
-- A coloured icon and count in the menu bar: amber when an agent needs you,
-  green when one has finished, accent-coloured while agents work, grey when idle.
-- A dropdown listing agents grouped by workspace, most urgent first, with each
-  agent's status and working directory.
+- A robot head in the menu bar, carrying a small dot at its top right for the
+  most urgent state present: amber when an agent needs you, green when one has
+  finished, accent-coloured while agents work, and no dot at all when everything
+  is idle. The head dims when Herdr is unreachable.
+- A dropdown listing every agent grouped by workspace, most urgent first,
+  including idle and working ones, with each agent's status and directory.
 - Clicking an agent focuses its pane in Herdr and brings the hosting terminal
   to the front.
 - A desktop notification when an agent becomes blocked, with toggles for
