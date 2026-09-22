@@ -1,0 +1,8 @@
+# Swift Package Manager
+.build/
+
+# Assembled .app bundle
+build/
+
+# macOS
+.DS_Store
