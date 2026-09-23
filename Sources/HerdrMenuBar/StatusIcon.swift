@@ -1,15 +1,24 @@
 import AppKit
 
-/// The menu bar image: a robot head, with a small urgency dot at its top right.
+/// The menu bar image: a robot head, with a small state dot at its top right.
 ///
 /// SF Symbols has no robot glyph, so the head is drawn by hand. The head is
 /// tinted with `labelColor` rather than a status colour, so it reads as a
 /// normal menu bar item; only the dot carries state.
+///
+/// Drawing is kept coarse on purpose. At a drawn height of 16pt anything
+/// thinner than roughly 1.5pt does not survive rasterisation, so the head has
+/// no mouth and the antenna stem is deliberately chunky.
 enum StatusIcon {
-    private static let size = NSSize(width: 20, height: 16)
+    private static let size = NSSize(width: 17, height: 16)
 
-    /// Builds the icon for the most urgent status present, or no dot at all
-    /// when nothing wants attention.
+    /// Head geometry. The rounded corners matter: they curve away from the top
+    /// right, which lets the dot sit in that corner while barely overlapping
+    /// anything actually drawn.
+    private static let head = NSRect(x: 1.0, y: 2.2, width: 12.0, height: 9.4)
+    private static let headCorner: CGFloat = 3.0
+    private static let dotCentre = NSPoint(x: 13.9, y: 12.6)
+
     static func image(for status: AgentStatus, connected: Bool) -> NSImage {
         let dot = dotColor(for: status, connected: connected)
 
@@ -40,23 +49,17 @@ enum StatusIcon {
     private static func drawHead(dimmed: Bool) {
         let body = NSBezierPath()
 
-        // Antenna: a stem with a bulb, centred over the head.
-        body.append(NSBezierPath(rect: NSRect(x: 7.6, y: 12.1, width: 0.8, height: 1.6)))
-        body.append(NSBezierPath(ovalIn: NSRect(x: 6.7, y: 13.3, width: 2.6, height: 2.6)))
+        // Antenna: a stem wide enough to survive rasterisation, plus a bulb,
+        // with clearance kept above the bulb so it cannot clip.
+        body.append(NSBezierPath(rect: NSRect(x: 6.3, y: 11.4, width: 1.4, height: 1.6)))
+        body.append(NSBezierPath(ovalIn: NSRect(x: 5.75, y: 12.75, width: 2.5, height: 2.5)))
 
-        // Head.
         body.append(NSBezierPath(
-            roundedRect: NSRect(x: 1.2, y: 2.4, width: 13.6, height: 10),
-            xRadius: 3.2, yRadius: 3.2))
+            roundedRect: head, xRadius: headCorner, yRadius: headCorner))
 
         // Eyes, knocked out of the head by the even-odd rule.
-        body.append(NSBezierPath(ovalIn: NSRect(x: 4.5, y: 6.4, width: 2.7, height: 2.7)))
-        body.append(NSBezierPath(ovalIn: NSRect(x: 8.8, y: 6.4, width: 2.7, height: 2.7)))
-
-        // Mouth, also knocked out.
-        body.append(NSBezierPath(
-            roundedRect: NSRect(x: 5.2, y: 4.2, width: 5.6, height: 1.2),
-            xRadius: 0.6, yRadius: 0.6))
+        body.append(NSBezierPath(ovalIn: NSRect(x: 3.55, y: 6.05, width: 2.7, height: 2.7)))
+        body.append(NSBezierPath(ovalIn: NSRect(x: 7.75, y: 6.05, width: 2.7, height: 2.7)))
 
         body.windingRule = .evenOdd
         (dimmed ? NSColor.tertiaryLabelColor : NSColor.labelColor).setFill()
@@ -64,20 +67,18 @@ enum StatusIcon {
     }
 
     private static func drawDot(_ color: NSColor) {
-        let centre = NSPoint(x: 16.4, y: 12.6)
-        let radius: CGFloat = 2.6
-
-        // Punch a gap first so the dot reads separately from the head it overlaps.
-        let gap = NSBezierPath(ovalIn: NSRect(
-            x: centre.x - radius - 0.85, y: centre.y - radius - 0.85,
-            width: (radius + 0.85) * 2, height: (radius + 0.85) * 2))
+        // Punch a small gap so the dot reads as separate from the head beneath it.
         NSGraphicsContext.current?.compositingOperation = .clear
-        gap.fill()
+        circle(radius: 2.6 + 0.5).fill()
 
         NSGraphicsContext.current?.compositingOperation = .sourceOver
         color.setFill()
+        circle(radius: 2.6).fill()
+    }
+
+    private static func circle(radius: CGFloat) -> NSBezierPath {
         NSBezierPath(ovalIn: NSRect(
-            x: centre.x - radius, y: centre.y - radius,
-            width: radius * 2, height: radius * 2)).fill()
+            x: dotCentre.x - radius, y: dotCentre.y - radius,
+            width: radius * 2, height: radius * 2))
     }
 }
