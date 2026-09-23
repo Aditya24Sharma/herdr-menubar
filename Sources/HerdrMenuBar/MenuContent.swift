@@ -45,24 +45,20 @@ struct MenuContent: View {
             Text("Agents")
                 .font(.system(size: 13, weight: .semibold))
             Spacer()
-            Circle()
-                .fill(monitor.isConnected ? Color.green : Color.secondary)
-                .frame(width: 6, height: 6)
-            Text(monitor.isConnected ? summary : "disconnected")
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+            // Shown only when it is bad news. A healthy connection needs no
+            // announcement, and the rows already say what every agent is doing.
+            if !monitor.isConnected {
+                Circle()
+                    .fill(Color.secondary)
+                    .frame(width: 6, height: 6)
+                Text("disconnected")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 10)
         .padding(.bottom, 6)
-    }
-
-    private var summary: String {
-        var parts: [String] = []
-        if monitor.blockedCount > 0 { parts.append("\(monitor.blockedCount) waiting") }
-        if monitor.workingCount > 0 { parts.append("\(monitor.workingCount) working") }
-        if monitor.doneCount > 0 { parts.append("\(monitor.doneCount) done") }
-        return parts.isEmpty ? "all idle" : parts.joined(separator: ", ")
     }
 
     private var emptyState: some View {
