@@ -29,7 +29,7 @@ enum AgentStatus: String, Codable {
     var color: Color {
         switch self {
         case .working: return .accentColor
-        case .blocked: return .orange
+        case .blocked: return .red
         case .done: return .green
         case .idle, .unknown: return .secondary
         }

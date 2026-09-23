@@ -60,7 +60,7 @@ enum StatusIcon {
         switch status {
         case .blocked:
             // Slightly larger, because this is the only state that wants action.
-            return Indicator(color: .systemOrange, radius: 2.95, filled: true)
+            return Indicator(color: .systemRed, radius: 2.95, filled: true)
         case .done:
             return Indicator(color: .systemGreen, radius: 2.6, filled: true)
         case .working:
