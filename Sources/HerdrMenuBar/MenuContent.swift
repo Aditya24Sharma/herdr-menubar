@@ -187,22 +187,26 @@ private struct StatusIndicator: View {
     let status: AgentStatus
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var turning = false
+
+    /// Seconds per full turn.
+    private static let period: TimeInterval = 0.9
 
     var body: some View {
         Group {
             if status == .working && !reduceMotion {
-                Circle()
-                    .trim(from: 0, to: 0.7)
-                    .stroke(status.color,
-                            style: StrokeStyle(lineWidth: 1.7, lineCap: .round))
-                    .frame(width: 9, height: 9)
-                    .rotationEffect(.degrees(turning ? 360 : 0))
-                    .onAppear {
-                        withAnimation(.linear(duration: 0.9).repeatForever(autoreverses: false)) {
-                            turning = true
-                        }
-                    }
+                // Driven from the clock, not `withAnimation`. A repeating
+                // animation transaction leaks into the enclosing view, so every
+                // republish of the agent list animated the whole panel.
+                TimelineView(.animation) { context in
+                    let turn = context.date.timeIntervalSinceReferenceDate
+                        .truncatingRemainder(dividingBy: Self.period) / Self.period
+                    Circle()
+                        .trim(from: 0, to: 0.7)
+                        .stroke(status.color,
+                                style: StrokeStyle(lineWidth: 1.7, lineCap: .round))
+                        .frame(width: 9, height: 9)
+                        .rotationEffect(.degrees(turn * 360))
+                }
             } else {
                 Circle()
                     .fill(status.color)
