@@ -35,6 +35,9 @@ enum AgentStatus: String, Codable {
         }
     }
 
+    /// True when the agent is not doing anything and is not waiting on anyone.
+    var isResting: Bool { self == .idle || self == .unknown }
+
     /// Ordering for the dropdown: the agents that want something come first.
     var sortRank: Int {
         switch self {

@@ -164,6 +164,9 @@ private struct AgentRow: View {
                     .foregroundStyle(agent.status == .blocked ? agent.status.color : .secondary)
                     .fixedSize()
             }
+            // Idle agents want nothing, so they recede and let the active ones
+            // carry the eye. Applied before the background so hover stays solid.
+            .opacity(agent.status.isResting ? 0.5 : 1)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(
