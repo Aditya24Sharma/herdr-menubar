@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Herdr Menu Bar Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+
+    --ground:   #f4f6f7;
+    --surface:  #ffffff;
+    --ink:      #191d22;
+    --ink-soft: #4a545f;
+    --muted:    #77828e;
+    --line:     #dfe4e8;
+    --line-firm:#c4ccd3;
+
+    /* The four agent states. These are the app's real colours, not decoration. */
+    --blocked:  #c4362c;
+    --warn:     #c9761d;
+    --done:     #2f8b52;
+    --working:  #2f63cf;
+    --idle:     #8a939d;
+
+    --measure: 40rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground:   #131619;
+      --surface:  #1a1e23;
+      --ink:      #e7eaed;
+      --ink-soft: #b3bcc5;
+      --muted:    #8b95a0;
+      --line:     #2b3138;
+      --line-firm:#3c444d;
+      --blocked:  #e8615a;
+      --warn:     #e59a4a;
+      --done:     #5cb97c;
+      --working:  #6d9bf0;
+      --idle:     #7d868f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:   #131619;
+    --surface:  #1a1e23;
+    --ink:      #e7eaed;
+    --ink-soft: #b3bcc5;
+    --muted:    #8b95a0;
+    --line:     #2b3138;
+    --line-firm:#3c444d;
+    --blocked:  #e8615a;
+    --warn:     #e59a4a;
+    --done:     #5cb97c;
+    --working:  #6d9bf0;
+    --idle:     #7d868f;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-inline: 20px;
+    padding-block: 72px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+
+  /* ---- type ---- */
+  h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; letter-spacing: -0.012em; }
+  h1 { font-size: 2.05rem; line-height: 1.18; }
+  h2 { font-size: 1.28rem; line-height: 1.3; }
+  h3 { font-size: 1rem; }
+  p  { margin: 0; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+
+  .lede { font-size: 1.1rem; color: var(--ink-soft); }
+  .note { font-size: 0.94rem; color: var(--ink-soft); }
+
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.86em;
+  }
+  code {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.08em 0.36em;
+  }
+
+  /* ---- sections ---- */
+  section { display: flex; flex-direction: column; gap: 18px; }
+  section > h2 + p { margin-top: -4px; }
+
+  .divider { height: 1px; background: var(--line); border: 0; margin: 0; }
+
+  /* ---- figures ---- */
+  figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .figbox {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 14px;
+    overflow-x: auto;
+  }
+  .figbox svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 460px; }
+  figcaption { font-size: 0.88rem; color: var(--muted); }
+
+  /* ---- process tree block ---- */
+  pre.tree {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.82rem;
+    line-height: 1.75;
+    color: var(--ink-soft);
+  }
+  pre.tree b { color: var(--ink); font-weight: 500; }
+  pre.tree i { color: var(--muted); font-style: normal; }
+
+  /* ---- state key ---- */
+  .states { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  .state { display: flex; align-items: center; gap: 8px; font-size: 0.94rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  /* Blocked also reads larger, so red is not the only cue. */
+  .dot.big { width: 12px; height: 12px; }
+  /* A turning arc in the app; a broken ring is the nearest still form. */
+  .dot.spin {
+    background: none;
+    border: 2px solid;
+    border-right-color: transparent;
+    transform: rotate(-45deg);
+  }
+
+  /* ---- plain lists ---- */
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: grid;
+    grid-template-columns: 13.5rem 1fr;
+    gap: 4px 20px;
+    padding-block: 13px;
+    border-top: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .row:last-child { border-bottom: 1px solid var(--line); }
+  .row dt { font-weight: 600; font-size: 0.95rem; }
+  .row dd { margin: 0; color: var(--ink-soft); font-size: 0.95rem; }
+  .row dt .mono { font-weight: 400; color: var(--ink); }
+
+  /* ---- numbered tiers ---- */
+  ol.tiers { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0; }
+  ol.tiers li {
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    gap: 4px 14px;
+    padding-block: 14px;
+    border-top: 1px solid var(--line);
+  }
+  ol.tiers li:last-child { border-bottom: 1px solid var(--line); }
+  ol.tiers .num {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding-top: 0.22em;
+  }
+  ol.tiers .what { font-weight: 600; font-size: 0.97rem; }
+  ol.tiers .why { grid-column: 2; color: var(--ink-soft); font-size: 0.93rem; }
+
+  .callout {
+    border-left: 2px solid var(--line-firm);
+    padding: 2px 0 2px 16px;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    h1 { font-size: 1.75rem; }
+    .page { padding-block: 48px 72px; gap: 44px; }
+    .row { grid-template-columns: 1fr; gap: 2px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header style="display:flex;flex-direction:column;gap:14px;">
+    <p class="eyebrow">Herdr Menu Bar</p>
+    <h1>How the menu bar app is put together</h1>
+    <p class="lede">
+      A small macOS app that watches every coding agent running inside Herdr and
+      puts their state in your menu bar. This page explains the moving parts,
+      why they are arranged this way, and what we ruled out.
+    </p>
+    <div class="states" style="margin-top:6px;">
+      <span class="state"><span class="dot big" style="background:var(--blocked)"></span>needs you</span>
+      <span class="state"><span class="dot" style="background:var(--done)"></span>finished</span>
+      <span class="state"><span class="dot spin" style="border-color:var(--working)"></span>working</span>
+      <span class="state" style="opacity:.55"><span class="dot" style="background:var(--idle)"></span>idle</span>
+    </div>
+  </header>
+
+  <hr class="divider">
+
+  <!-- ============ 1. THE PIECES ============ -->
+  <section>
+    <p class="eyebrow">1 — The pieces</p>
+    <h2>Three programs, one socket</h2>
+    <p>
+      Herdr is already two programs: a <strong>server</strong> that quietly owns all
+      your terminals, and a <strong>client</strong> that draws them in Ghostty. Our
+      menu bar app is a third, separate program. It never touches your terminals
+      directly — it only talks to the server.
+    </p>
+    <p>
+      They talk over a <strong>Unix socket</strong>, which is just a file on disk that
+      two programs use like a phone line. Ours lives at
+      <code>~/.config/herdr/herdr.sock</code>.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 760 300" role="img"
+             aria-label="The Herdr client runs inside Ghostty and talks to the Herdr server. The menu bar app talks to the same server over a Unix socket, and separately brings the Ghostty window to the front.">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+            </marker>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="var(--working)"></polygon>
+            </marker>
+          </defs>
+
+          <!-- Ghostty -->
+          <text x="118" y="44" text-anchor="middle" font-size="11.5" fill="var(--muted)">Ghostty — your terminal</text>
+          <rect x="20" y="56" width="196" height="120" rx="9" fill="none"
+                stroke="currentColor" stroke-opacity="0.3" stroke-dasharray="4 4"></rect>
+          <rect x="40" y="86" width="156" height="60" rx="6" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="118" y="110" text-anchor="middle" font-size="13" fill="currentColor">Herdr client</text>
+          <text x="118" y="128" text-anchor="middle" font-size="10.5" fill="var(--muted)">the panes you look at</text>
+
+          <!-- Server -->
+          <rect x="300" y="80" width="150" height="76" rx="9" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="375" y="108" text-anchor="middle" font-size="13" fill="currentColor">Herdr server</text>
+          <text x="375" y="126" text-anchor="middle" font-size="10.5" fill="var(--muted)">owns panes + agents</text>
+
+          <!-- Menu bar app -->
+          <rect x="540" y="80" width="200" height="76" rx="9" fill="var(--surface)"
+                stroke="var(--working)" stroke-width="1.5"></rect>
+          <text x="640" y="108" text-anchor="middle" font-size="13" fill="currentColor">Menu bar app</text>
+          <text x="640" y="126" text-anchor="middle" font-size="10.5" fill="var(--muted)">the part we built</text>
+
+          <!-- client <-> server -->
+          <line x1="216" y1="116" x2="294" y2="116" stroke="currentColor" stroke-opacity="0.5"
+                marker-end="url(#a1)"></line>
+          <text x="255" y="107" text-anchor="middle" font-size="10" fill="var(--muted)">terminal I/O</text>
+
+          <!-- server -> app -->
+          <line x1="450" y1="104" x2="534" y2="104" stroke="var(--working)" marker-end="url(#a2)"></line>
+          <text x="492" y="95" text-anchor="middle" font-size="10" fill="var(--muted)">pushes state</text>
+
+          <!-- app -> server -->
+          <line x1="540" y1="134" x2="456" y2="134" stroke="currentColor" stroke-opacity="0.5"
+                marker-end="url(#a1)"></line>
+          <text x="498" y="150" text-anchor="middle" font-size="10" fill="var(--muted)">asks, focuses</text>
+
+          <!-- app -> ghostty window raise -->
+          <path d="M 640 158 C 640 252, 320 262, 140 184" fill="none" stroke="currentColor"
+                stroke-opacity="0.45" stroke-dasharray="5 4" marker-end="url(#a1)"></path>
+          <text x="392" y="256" text-anchor="middle" font-size="10" fill="var(--muted)">brings the window to the front</text>
+        </svg>
+      </div>
+      <figcaption>
+        Solid lines are socket messages. The dashed line is the one thing Herdr
+        cannot do for us: raising a macOS window.
+      </figcaption>
+    </figure>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 2. STAYING UP TO DATE ============ -->
+  <section>
+    <p class="eyebrow">2 — Staying up to date</p>
+    <h2>One thing is pushed, one thing is pulled</h2>
+    <p>
+      The app keeps a list of agents in memory. Two different mechanisms keep
+      that list honest, and they do different jobs.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 720 196" role="img"
+             aria-label="The server pushes agent status changes to the app instantly. The app separately pulls a full snapshot from the server every five seconds to notice panes that appeared or closed.">
+          <defs>
+            <marker id="b1" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="var(--working)"></polygon>
+            </marker>
+            <marker id="b2" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+            </marker>
+          </defs>
+
+          <rect x="24" y="62" width="168" height="72" rx="9" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="108" y="94" text-anchor="middle" font-size="13" fill="currentColor">Herdr server</text>
+          <text x="108" y="112" text-anchor="middle" font-size="10.5" fill="var(--muted)">the truth</text>
+
+          <rect x="512" y="62" width="184" height="72" rx="9" fill="var(--surface)"
+                stroke="var(--working)" stroke-width="1.5"></rect>
+          <text x="604" y="94" text-anchor="middle" font-size="13" fill="currentColor">Agent list</text>
+          <text x="604" y="112" text-anchor="middle" font-size="10.5" fill="var(--muted)">what the menu shows</text>
+
+          <!-- push lane -->
+          <line x1="192" y1="86" x2="506" y2="86" stroke="var(--working)" marker-end="url(#b1)"></line>
+          <text x="349" y="76" text-anchor="middle" font-size="11" fill="currentColor">pushed the instant a state changes</text>
+          <text x="349" y="48" text-anchor="middle" font-size="10" fill="var(--muted)">one subscription per pane — no delay</text>
+
+          <!-- pull lane -->
+          <line x1="512" y1="112" x2="198" y2="112" stroke="currentColor" stroke-opacity="0.5"
+                marker-end="url(#b2)"></line>
+          <text x="349" y="132" text-anchor="middle" font-size="11" fill="currentColor">pulled every 5 seconds</text>
+          <text x="349" y="158" text-anchor="middle" font-size="10" fill="var(--muted)">a full snapshot, to spot panes that came or went</text>
+        </svg>
+      </div>
+      <figcaption>
+        Status is never delayed. The five-second pull exists only to notice new
+        or closed panes, because Herdr can only push status for panes you already
+        asked about by name.
+      </figcaption>
+    </figure>
+
+    <p class="callout">
+      That last point is the reason for the whole arrangement. Herdr will push
+      &ldquo;this agent changed state&rdquo; only for a specific pane you named up
+      front. So when panes appear or vanish, the app has to notice and re-subscribe.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 3. THE TRAP ============ -->
+  <section>
+    <p class="eyebrow">3 — The trap we hit</p>
+    <h2>Why we don&rsquo;t listen for &ldquo;a pane was created&rdquo;</h2>
+    <p>
+      Herdr does offer an event for panes appearing. Using it seems obvious, and
+      it broke badly. When you subscribe, Herdr first replays its stored history
+      of the last 512 events, so a brand-new listener can catch up. Those replayed
+      events look exactly like fresh ones.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 720 248" role="img"
+             aria-label="A four-step cycle: the app subscribes, the server replays its whole event buffer, the app misreads the replay as new panes, the app resubscribes, and the cycle repeats forever.">
+          <defs>
+            <marker id="c1" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="var(--warn)"></polygon>
+            </marker>
+          </defs>
+
+          <rect x="44" y="26" width="196" height="54" rx="7" fill="var(--surface)"
+                stroke="var(--warn)" stroke-opacity="0.55"></rect>
+          <text x="142" y="58" text-anchor="middle" font-size="12" fill="currentColor">The app subscribes</text>
+
+          <rect x="444" y="26" width="232" height="54" rx="7" fill="var(--surface)"
+                stroke="var(--warn)" stroke-opacity="0.55"></rect>
+          <text x="560" y="51" text-anchor="middle" font-size="12" fill="currentColor">Server replays 512</text>
+          <text x="560" y="68" text-anchor="middle" font-size="12" fill="currentColor">old events</text>
+
+          <rect x="444" y="168" width="232" height="54" rx="7" fill="var(--surface)"
+                stroke="var(--warn)" stroke-opacity="0.55"></rect>
+          <text x="560" y="193" text-anchor="middle" font-size="12" fill="currentColor">App reads them as</text>
+          <text x="560" y="210" text-anchor="middle" font-size="12" fill="currentColor">new panes</text>
+
+          <rect x="44" y="168" width="196" height="54" rx="7" fill="var(--surface)"
+                stroke="var(--warn)" stroke-opacity="0.55"></rect>
+          <text x="142" y="200" text-anchor="middle" font-size="12" fill="currentColor">App subscribes again</text>
+
+          <line x1="240" y1="53" x2="438" y2="53" stroke="var(--warn)" marker-end="url(#c1)"></line>
+          <line x1="560" y1="80" x2="560" y2="162" stroke="var(--warn)" marker-end="url(#c1)"></line>
+          <line x1="444" y1="195" x2="246" y2="195" stroke="var(--warn)" marker-end="url(#c1)"></line>
+          <line x1="142" y1="168" x2="142" y2="86" stroke="var(--warn)" marker-end="url(#c1)"></line>
+
+          <text x="122" y="124" text-anchor="middle" font-size="10" fill="var(--warn)"
+                transform="rotate(-90 122 124)">and round again</text>
+        </svg>
+      </div>
+      <figcaption>
+        The loop that made the first version hammer the Herdr server non-stop.
+        Replaying history is sensible behaviour; treating the replay as news is not.
+      </figcaption>
+    </figure>
+
+    <p>
+      The fix was to stop listening for those events entirely and compare
+      snapshots instead. A snapshot describes <em>what is true now</em>, so
+      re-reading it twice is harmless. An event says <em>something happened</em>,
+      which is only safe if you know you haven&rsquo;t already seen it.
+    </p>
+    <p class="note">
+      We also dropped a second event, <code>pane.updated</code>, for a plainer
+      reason: it fires about ten times a second while agents work, because their
+      terminal titles animate.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 4. CLICKING ============ -->
+  <section>
+    <p class="eyebrow">4 — Clicking an agent</p>
+    <h2>Jumping to a pane takes two separate steps</h2>
+    <p>
+      Herdr can move focus between panes, but it has no idea your terminal window
+      is buried behind a browser. Those are two different problems, solved two
+      different ways.
+    </p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 720 218" role="img"
+             aria-label="Clicking an agent row does two things: it tells Herdr to focus that pane, and it brings the hosting terminal application to the front. Together they put you in the pane.">
+          <defs>
+            <marker id="d1" viewBox="0 0 10 10" refX="9" refY="5"
+                    markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,1 10,5 0,9" fill="currentColor"></polygon>
+            </marker>
+          </defs>
+
+          <rect x="16" y="79" width="150" height="60" rx="8" fill="var(--surface)"
+                stroke="var(--working)" stroke-width="1.5"></rect>
+          <text x="91" y="105" text-anchor="middle" font-size="12" fill="currentColor">You click an</text>
+          <text x="91" y="122" text-anchor="middle" font-size="12" fill="currentColor">agent row</text>
+
+          <rect x="258" y="22" width="216" height="60" rx="8" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="366" y="46" text-anchor="middle" font-size="12" fill="currentColor">Herdr switches to the pane</text>
+          <text x="366" y="65" text-anchor="middle" font-size="10.5" fill="var(--muted)">one socket message</text>
+
+          <rect x="258" y="136" width="216" height="60" rx="8" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="366" y="160" text-anchor="middle" font-size="12" fill="currentColor">Ghostty comes forward</text>
+          <text x="366" y="179" text-anchor="middle" font-size="10.5" fill="var(--muted)">a macOS call, not a Herdr one</text>
+
+          <rect x="562" y="79" width="146" height="60" rx="8" fill="var(--surface)"
+                stroke="currentColor" stroke-opacity="0.45"></rect>
+          <text x="635" y="105" text-anchor="middle" font-size="12" fill="currentColor">You&rsquo;re looking</text>
+          <text x="635" y="122" text-anchor="middle" font-size="12" fill="currentColor">at the agent</text>
+
+          <line x1="166" y1="98" x2="252" y2="60" stroke="currentColor" stroke-opacity="0.5" marker-end="url(#d1)"></line>
+          <line x1="166" y1="120" x2="252" y2="158" stroke="currentColor" stroke-opacity="0.5" marker-end="url(#d1)"></line>
+          <line x1="474" y1="60" x2="558" y2="98" stroke="currentColor" stroke-opacity="0.5" marker-end="url(#d1)"></line>
+          <line x1="474" y1="158" x2="558" y2="120" stroke="currentColor" stroke-opacity="0.5" marker-end="url(#d1)"></line>
+
+          <text x="206" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">1</text>
+          <text x="206" y="156" text-anchor="middle" font-size="11" fill="var(--muted)">2</text>
+        </svg>
+      </div>
+      <figcaption>
+        Both steps have to happen. Step 1 alone moves focus in a window you
+        can&rsquo;t see; step 2 alone shows the wrong pane.
+      </figcaption>
+    </figure>
+
+    <h3 style="margin-top:8px;">Finding the right window</h3>
+    <p>
+      Step 2 has a wrinkle: the app has to work out <em>which</em> application is
+      hosting Herdr. It does that by walking up the family tree of running
+      programs until it finds one macOS recognises as a real app. Shells and
+      helpers have no app identity; Ghostty does.
+    </p>
+    <pre class="tree">herdr        <i>the client — no app identity</i>
+└─ zsh       <i>no app identity</i>
+   └─ login  <i>no app identity</i>
+      └─ <b>Ghostty</b>  <b>← first real app: this is the window to raise</b></pre>
+    <p class="note">
+      This is why the app works if you switch to iTerm or Kitty tomorrow — it
+      never hard-codes a terminal name, it just climbs until something answers.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 5. NOTIFICATIONS ============ -->
+  <section>
+    <p class="eyebrow">5 — Notifications</p>
+    <h2>Three ways to get your attention, tried in order</h2>
+    <p>
+      macOS only gives the good notification system to apps signed with a paid
+      Apple developer certificate. Ours is built on your machine, so it falls back.
+      The app tries each option and uses the first that works.
+    </p>
+    <ol class="tiers">
+      <li>
+        <span class="num">01</span>
+        <span class="what">Apple&rsquo;s own notifications</span>
+        <span class="why">
+          Proper banner with a <em>Jump to pane</em> button. Needs a paid developer
+          certificate, so it is currently unavailable — it will start working on its
+          own if the app is ever signed.
+        </span>
+      </li>
+      <li>
+        <span class="num">02</span>
+        <span class="what">terminal-notifier</span>
+        <span class="why">
+          A small signed helper you can install with
+          <code>brew install terminal-notifier</code>. Clicking the banner still
+          jumps you to the pane. This is the one worth having.
+        </span>
+      </li>
+      <li>
+        <span class="num">03</span>
+        <span class="what">A plain AppleScript banner</span>
+        <span class="why">
+          Always works, but the notification is credited to Script Editor and
+          clicking it does nothing. This is what you get today.
+        </span>
+      </li>
+    </ol>
+    <p class="note">
+      Herdr itself uses the same last two fallbacks, so installing
+      <code>terminal-notifier</code> improves both.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 6. FILES ============ -->
+  <section>
+    <p class="eyebrow">6 — The code</p>
+    <h2>Which file does what</h2>
+    <p>Ten small Swift files. Each one has a single job.</p>
+    <dl class="rows">
+      <div class="row">
+        <dt><span class="mono">HerdrSocket</span></dt>
+        <dd>Talks to the socket. Sends a line of JSON, reads lines back.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">HerdrModels</span></dt>
+        <dd>What an agent, a workspace and a state are.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">HerdrMonitor</span></dt>
+        <dd>The brain. Holds the agent list, runs the push and pull described above.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">Jumper</span></dt>
+        <dd>The two-step jump, including the walk up the process tree.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">Notifier</span></dt>
+        <dd>The three notification tiers.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">Settings</span></dt>
+        <dd>Your toggles, and the launch-at-login switch.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">MenuContent</span></dt>
+        <dd>The dropdown panel — agents grouped by workspace.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">StatusIcon</span></dt>
+        <dd>Draws the robot head and the state dot, by hand.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">HerdrMenuBarApp</span></dt>
+        <dd>Starts everything and puts the icon in the menu bar.</dd>
+      </div>
+      <div class="row">
+        <dt><span class="mono">Log</span></dt>
+        <dd>Debug output, off unless you ask for it.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ============ 7. DECISIONS ============ -->
+  <section>
+    <p class="eyebrow">7 — Decisions</p>
+    <h2>The choices worth remembering</h2>
+    <dl class="rows">
+      <div class="row">
+        <dt>Snapshots, not pane events</dt>
+        <dd>
+          Events get replayed and cause an endless loop. A snapshot is safe to
+          read twice.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>Status pushed, panes polled</dt>
+        <dd>
+          The thing you care about is instant. The slow five-second check is only
+          for bookkeeping.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>Climb the process tree</dt>
+        <dd>
+          Finds the real terminal without hard-coding a list of terminal apps.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>A hand-drawn robot</dt>
+        <dd>
+          macOS ships no robot icon, so the head is drawn in code. That also lets
+          the state dot sit on its corner.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>The head stays neutral</dt>
+        <dd>
+          Only the dot carries colour, so the icon looks at home next to the
+          system icons instead of shouting.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>State without words</dt>
+        <dd>
+          A spinner, a colour and a faded row say it faster than a label, and the
+          width goes to names instead. Blocked is drawn larger too, so red is not
+          the only thing separating it from green.
+        </dd>
+      </div>
+      <div class="row">
+        <dt>Short lists don&rsquo;t scroll</dt>
+        <dd>
+          A scrolling box has no natural height, which once collapsed the whole
+          panel to nothing.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+</div>
+
+</body>
+</html>
