@@ -16,6 +16,7 @@ session. Click an agent to jump straight to its pane.
   text — a turning spinner while an agent works, a red dot when it wants you, a
   green dot when it has finished, and a faded row when it is idle — so the
   width goes to names and directories instead. Hover a row to read its state.
+  The header stays bare unless Herdr becomes unreachable, which it says.
 - Clicking an agent focuses its pane in Herdr and brings the hosting terminal
   to the front.
 - A desktop notification when an agent becomes blocked, with toggles for
