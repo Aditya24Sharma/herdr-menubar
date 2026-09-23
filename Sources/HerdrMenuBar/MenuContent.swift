@@ -154,13 +154,7 @@ private struct AgentRow: View {
                             .truncationMode(.head)
                     }
                 }
-                // The name is the thing worth reading, so it wins the space.
-                .layoutPriority(1)
-                Spacer(minLength: 4)
-                Text(agent.status.label)
-                    .font(.system(size: 10))
-                    .foregroundStyle(agent.status == .blocked ? agent.status.color : .secondary)
-                    .fixedSize()
+                Spacer(minLength: 0)
             }
             // Idle agents want nothing, so they recede and let the active ones
             // carry the eye. Applied before the background so hover stays solid.
@@ -176,7 +170,7 @@ private struct AgentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help("Jump to \(agent.paneID)")
+        .help("\(agent.status.label) — click to jump to \(agent.paneID)")
     }
 }
 
@@ -208,9 +202,10 @@ private struct StatusIndicator: View {
                         .rotationEffect(.degrees(turn * 360))
                 }
             } else {
+                let size: CGFloat = status == .blocked ? 9 : 7
                 Circle()
                     .fill(status.color)
-                    .frame(width: 7, height: 7)
+                    .frame(width: size, height: size)
             }
         }
         // A fixed box so the spinner and the dot leave names on the same line.
