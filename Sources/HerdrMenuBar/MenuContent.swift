@@ -140,9 +140,7 @@ private struct AgentRow: View {
             Jumper.jump(to: agent.paneID)
         } label: {
             HStack(spacing: 8) {
-                Circle()
-                    .fill(agent.status.color)
-                    .frame(width: 7, height: 7)
+                StatusIndicator(status: agent.status)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(agent.displayName)
                         .font(.system(size: 12, weight: .medium))
@@ -179,5 +177,39 @@ private struct AgentRow: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .help("Jump to \(agent.paneID)")
+    }
+}
+
+/// The leading mark on a row. A working agent gets a turning spinner, because
+/// a still dot cannot say whether the agent is moving or wedged; every other
+/// state is a plain dot.
+private struct StatusIndicator: View {
+    let status: AgentStatus
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var turning = false
+
+    var body: some View {
+        Group {
+            if status == .working && !reduceMotion {
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(status.color,
+                            style: StrokeStyle(lineWidth: 1.7, lineCap: .round))
+                    .frame(width: 9, height: 9)
+                    .rotationEffect(.degrees(turning ? 360 : 0))
+                    .onAppear {
+                        withAnimation(.linear(duration: 0.9).repeatForever(autoreverses: false)) {
+                            turning = true
+                        }
+                    }
+            } else {
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 7, height: 7)
+            }
+        }
+        // A fixed box so the spinner and the dot leave names on the same line.
+        .frame(width: 10, height: 10)
     }
 }
