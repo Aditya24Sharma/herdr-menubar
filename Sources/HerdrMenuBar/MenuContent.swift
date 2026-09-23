@@ -52,7 +52,7 @@ struct MenuContent: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.top, 10)
         .padding(.bottom, 6)
     }
@@ -76,7 +76,7 @@ struct MenuContent: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.vertical, 10)
     }
 
@@ -93,7 +93,7 @@ struct MenuContent: View {
                 }
                 .toggleStyle(.checkbox)
                 .font(.system(size: 12))
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 Divider()
             }
@@ -107,7 +107,7 @@ struct MenuContent: View {
             .buttonStyle(.plain)
             .font(.system(size: 12))
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
     }
@@ -122,7 +122,7 @@ private struct WorkspaceSection: View {
             Text(workspace.displayName.uppercased())
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.tertiary)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 2)
             ForEach(agents) { agent in
                 AgentRow(agent: agent)
@@ -159,13 +159,15 @@ private struct AgentRow: View {
             // Idle agents want nothing, so they recede and let the active ones
             // carry the eye. Applied before the background so hover stays solid.
             .opacity(agent.status.isResting ? 0.5 : 1)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 8)
             .padding(.vertical, 5)
             .background(
-                RoundedRectangle(cornerRadius: 5)
+                RoundedRectangle(cornerRadius: 6)
                     .fill(hovering ? Color.primary.opacity(0.08) : .clear)
             )
-            .padding(.horizontal, 2)
+            // Inset so the hover highlight floats clear of the panel edges
+            // instead of running into them.
+            .padding(.horizontal, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
