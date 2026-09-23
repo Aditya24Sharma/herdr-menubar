@@ -8,11 +8,14 @@ session. Click an agent to jump straight to its pane.
 - A robot head in the menu bar, carrying a small dot at its top right for the
   most urgent state present. The dot encodes state in shape as well as colour,
   so the states stay apart without relying on colour vision: a filled dot means
-  an agent is waiting on you (amber), has finished (green), or is working
-  (accent); a faint hollow ring means everything is idle; and no dot at all,
-  with the head dimmed, means Herdr is unreachable.
+  an agent is waiting on you (red, and larger), has finished (green), or is
+  working (accent); a faint hollow ring means everything is idle; and no dot at
+  all, with the head dimmed, means Herdr is unreachable.
 - A dropdown listing every agent grouped by workspace, most urgent first,
-  including idle and working ones, with each agent's status and directory.
+  including idle and working ones. State is carried visually rather than in
+  text — a turning spinner while an agent works, a red dot when it wants you, a
+  green dot when it has finished, and a faded row when it is idle — so the
+  width goes to names and directories instead. Hover a row to read its state.
 - Clicking an agent focuses its pane in Herdr and brings the hosting terminal
   to the front.
 - A desktop notification when an agent becomes blocked, with toggles for
