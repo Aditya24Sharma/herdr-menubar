@@ -175,7 +175,7 @@ final class HerdrMonitor: ObservableObject {
 
         Task { @MainActor [weak self] in
             guard let self else { return }
-            self.workspaces = workspaces
+            if self.workspaces != workspaces { self.workspaces = workspaces }
             self.replaceAgents(agents)
         }
         return paneIDs
@@ -202,8 +202,15 @@ final class HerdrMonitor: ObservableObject {
 
     @MainActor
     private func replaceAgents(_ incoming: [Agent]) {
+        let sorted = incoming.sorted(by: Self.ordering)
+        // Republishing an identical list still rebuilds the panel, and a rebuild
+        // restarts whatever is animating inside it. The reconcile runs every few
+        // seconds, so without this guard the dropdown never settles.
+        guard sorted != agents else { return }
+
         let previous = Dictionary(uniqueKeysWithValues: agents.map { ($0.paneID, $0.status) })
-        agents = incoming.sorted(by: Self.ordering)
+        agents = sorted
+        Log.debug("agent list changed (\(sorted.count) agents)")
         // A reconcile can reveal a transition no push event covered.
         for agent in agents where agent.status == .blocked {
             if let was = previous[agent.paneID], was != .blocked { announce(agent, from: was) }
