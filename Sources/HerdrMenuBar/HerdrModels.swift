@@ -65,9 +65,38 @@ struct Agent: Identifiable, Equatable {
     /// Best available human label, falling back until something is printable.
     var displayName: String {
         if let name, !name.isEmpty { return name }
-        if let title, !title.isEmpty { return title }
+        if let title {
+            let cleaned = Agent.strippingActivityGlyph(title)
+            if !cleaned.isEmpty { return cleaned }
+        }
         if !kind.isEmpty { return kind }
         return paneID
+    }
+
+    /// Glyphs an agent animates into its terminal title while it works.
+    ///
+    /// Herdr strips the set it knows (`src/terminal/title.rs`) but not the
+    /// quadrant circles newer Claude Code versions cycle through, so those
+    /// arrive in `terminal_title_stripped` and make the name flicker as they
+    /// rotate. The rule here matches Herdr's: remove at most one leading glyph,
+    /// and only when whitespace or the end of the string follows it, so a title
+    /// that legitimately starts with one of these characters survives.
+    private static let activityGlyphs: Set<Character> = [
+        "\u{00B7}", "\u{2722}", "\u{2733}", "\u{2736}", "\u{273B}", "\u{273D}",
+        "\u{25D0}", "\u{25D1}", "\u{25D2}", "\u{25D3}",
+    ]
+
+    static func strippingActivityGlyph(_ title: String) -> String {
+        let trimmed = title.trimmingCharacters(in: .whitespaces)
+        guard let first = trimmed.first else { return trimmed }
+
+        let isBraille = first.unicodeScalars.first
+            .map { (0x2800...0x28FF).contains(Int($0.value)) } ?? false
+        guard isBraille || activityGlyphs.contains(first) else { return trimmed }
+
+        let rest = trimmed.dropFirst()
+        guard rest.isEmpty || rest.first?.isWhitespace == true else { return trimmed }
+        return rest.trimmingCharacters(in: .whitespaces)
     }
 
     /// Trailing context line: the directory the agent is working in.
