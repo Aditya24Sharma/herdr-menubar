@@ -105,6 +105,7 @@ struct MenuContent: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .pointerCursor()
         }
     }
 }
@@ -176,6 +177,7 @@ private struct AgentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
+        .pointerCursor()
         .help("\(agent.status.label) — click to jump to \(agent.paneID)")
     }
 }
@@ -217,4 +219,36 @@ private struct StatusIndicator: View {
         // A fixed box so the spinner and the dot leave names on the same line.
         .frame(width: 10, height: 10)
     }
+}
+
+/// A hand cursor over anything clickable.
+///
+/// `push` and `pop` have to stay balanced, and the panel can close while the
+/// pointer is still inside a row — the jump does exactly that — so the pop is
+/// mirrored on disappear as well. Without it the cursor stays a hand over the
+/// whole screen.
+private struct PointerCursor: ViewModifier {
+    @State private var inside = false
+
+    func body(content: Content) -> some View {
+        content
+            .onHover { hovering in
+                guard hovering != inside else { return }
+                inside = hovering
+                if hovering {
+                    NSCursor.pointingHand.push()
+                } else {
+                    NSCursor.pop()
+                }
+            }
+            .onDisappear {
+                guard inside else { return }
+                inside = false
+                NSCursor.pop()
+            }
+    }
+}
+
+private extension View {
+    func pointerCursor() -> some View { modifier(PointerCursor()) }
 }
