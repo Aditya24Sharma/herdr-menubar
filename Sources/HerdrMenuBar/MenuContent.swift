@@ -20,7 +20,7 @@ struct MenuContent: View {
             if monitor.agents.isEmpty {
                 if monitor.isConnected { emptyState }
             } else if monitor.agents.count > Self.scrollThreshold {
-                ScrollView { agentList }.frame(height: 340)
+                ScrollView { agentList }.frame(height: Self.maxListHeight)
             } else {
                 agentList
             }
@@ -28,8 +28,11 @@ struct MenuContent: View {
         .frame(width: 258)
     }
 
-    /// Above this many agents the list scrolls instead of growing.
-    private static let scrollThreshold = 8
+    /// Above this many agents the list scrolls instead of growing, so the panel
+    /// cannot run off the screen on a busy session.
+    private static let scrollThreshold = 6
+    /// Roughly six rows plus their headings.
+    private static let maxListHeight: CGFloat = 340
 
     /// A ScrollView has no intrinsic height, and MenuBarExtra sizes its panel to
     /// fit its content, so wrapping a short list in one collapses it to nothing.
