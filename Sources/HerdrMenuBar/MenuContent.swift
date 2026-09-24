@@ -117,10 +117,11 @@ private struct WorkspaceSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(workspace.displayName.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 11, weight: .semibold))
+                .tracking(0.6)
+                .foregroundStyle(.secondary)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 2)
+                .padding(.bottom, 3)
             ForEach(agents) { agent in
                 AgentRow(agent: agent)
             }
