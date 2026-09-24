@@ -8,10 +8,10 @@ struct MenuContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
+            if !monitor.isConnected { disconnectedNotice }
 
             if monitor.agents.isEmpty {
-                emptyState
+                if monitor.isConnected { emptyState }
             } else if monitor.agents.count > Self.scrollThreshold {
                 ScrollView { agentList }.frame(height: 340)
             } else {
@@ -32,48 +32,45 @@ struct MenuContent: View {
     /// Short lists are therefore laid out directly and only long ones scroll,
     /// with an explicit height.
     private var agentList: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 13) {
             ForEach(monitor.agentsByWorkspace, id: \.workspace.id) { group in
                 WorkspaceSection(workspace: group.workspace, agents: group.agents)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
     }
 
-    private var header: some View {
-        HStack(spacing: 6) {
-            Text("Agents")
-                .font(.system(size: 13, weight: .semibold))
-            Spacer()
-            // Shown only when it is bad news. A healthy connection needs no
-            // announcement, and the rows already say what every agent is doing.
-            if !monitor.isConnected {
-                Circle()
-                    .fill(Color.secondary)
-                    .frame(width: 6, height: 6)
-                Text("disconnected")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+    /// Only appears when Herdr is unreachable. Without it a dropped connection
+    /// would look like a session where nothing happens to be running.
+    private var disconnectedNotice: some View {
+        HStack(alignment: .top, spacing: 7) {
+            Circle()
+                .fill(Color.secondary)
+                .frame(width: 6, height: 6)
+                .padding(.top, 4)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Can't reach Herdr")
+                    .font(.system(size: 12, weight: .medium))
+                if let error = monitor.lastError {
+                    Text(error)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 6)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
     }
 
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(monitor.isConnected ? "No agents running." : "Can't reach Herdr.")
-                .font(.system(size: 12))
-            if let error = monitor.lastError, !monitor.isConnected {
-                Text(error)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        Text("No agents running.")
+            .font(.system(size: 12))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
     }
 
     private var footer: some View {
@@ -124,22 +121,24 @@ private struct WorkspaceSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 5) {
             Text(workspace.displayName)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 2)
-            ForEach(agents) { agent in
-                AgentRow(agent: agent)
+                .padding(.horizontal, 16)
+
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(agents) { agent in
+                    AgentRow(agent: agent)
+                }
             }
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(sectionFill)
+            )
+            .padding(.horizontal, 8)
         }
-        .padding(.vertical, 9)
-        .background(
-            RoundedRectangle(cornerRadius: 9)
-                .fill(sectionFill)
-        )
-        .padding(.horizontal, 8)
     }
 }
 
