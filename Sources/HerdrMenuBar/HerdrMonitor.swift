@@ -250,9 +250,13 @@ final class HerdrMonitor: ObservableObject {
         }
     }
 
+    /// Position in the list never depends on state. Sorting by urgency means
+    /// the row under the cursor moves the instant an agent changes, so colour
+    /// carries urgency and order stays put.
     private static func ordering(_ a: Agent, _ b: Agent) -> Bool {
-        if a.status.sortRank != b.status.sortRank {
-            return a.status.sortRank < b.status.sortRank
+        if a.workspaceID != b.workspaceID { return a.workspaceID < b.workspaceID }
+        if a.paneNumber != b.paneNumber {
+            return (a.paneNumber ?? .max) < (b.paneNumber ?? .max)
         }
         return a.paneID < b.paneID
     }
@@ -277,11 +281,12 @@ final class HerdrMonitor: ObservableObject {
                 (workspaces[id] ?? Workspace(workspaceID: id, label: nil, number: nil),
                  agents.sorted(by: Self.ordering))
             }
+            // Herdr's own workspace order, so the menu matches the tab strip.
             .sorted { lhs, rhs in
-                let l = lhs.agents.first?.status.sortRank ?? 9
-                let r = rhs.agents.first?.status.sortRank ?? 9
+                let l = lhs.workspace.number ?? .max
+                let r = rhs.workspace.number ?? .max
                 if l != r { return l < r }
-                return lhs.workspace.displayName < rhs.workspace.displayName
+                return lhs.workspace.workspaceID < rhs.workspace.workspaceID
             }
     }
 }

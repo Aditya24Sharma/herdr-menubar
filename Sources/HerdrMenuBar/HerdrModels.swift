@@ -37,17 +37,6 @@ enum AgentStatus: String, Codable {
 
     /// True when the agent is not doing anything and is not waiting on anyone.
     var isResting: Bool { self == .idle || self == .unknown }
-
-    /// Ordering for the dropdown: the agents that want something come first.
-    var sortRank: Int {
-        switch self {
-        case .blocked: return 0
-        case .done: return 1
-        case .working: return 2
-        case .idle: return 3
-        case .unknown: return 4
-        }
-    }
 }
 
 struct Agent: Identifiable, Equatable {
@@ -61,6 +50,13 @@ struct Agent: Identifiable, Equatable {
     var cwd: String?
 
     var id: String { paneID }
+
+    /// Pane index within its workspace, from a `w3Y:p12` style id. Compared as
+    /// a number so p2 sorts before p10.
+    var paneNumber: Int? {
+        guard let marker = paneID.range(of: ":p") else { return nil }
+        return Int(paneID[marker.upperBound...])
+    }
 
     /// Best available human label, falling back until something is printable.
     var displayName: String {
