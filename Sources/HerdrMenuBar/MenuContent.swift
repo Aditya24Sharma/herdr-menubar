@@ -129,10 +129,18 @@ private struct WorkspaceSection: View {
 
 private struct AgentRow: View {
     let agent: Agent
+
+    /// Supported in newer macOS versions and inert in older ones, so
+    /// `MenuPanel.close()` backs it up.
+    @Environment(\.dismiss) private var dismiss
     @State private var hovering = false
 
     var body: some View {
         Button {
+            // Dismiss first so the panel is gone before the terminal comes
+            // forward, rather than lingering over it.
+            dismiss()
+            MenuPanel.close()
             Jumper.jump(to: agent.paneID)
         } label: {
             HStack(spacing: 8) {
