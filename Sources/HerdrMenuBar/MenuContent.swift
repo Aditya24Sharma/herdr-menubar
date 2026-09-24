@@ -39,7 +39,7 @@ struct MenuContent: View {
     /// Short lists are therefore laid out directly and only long ones scroll,
     /// with an explicit height.
     private var agentList: some View {
-        VStack(alignment: .leading, spacing: 13) {
+        VStack(alignment: .leading, spacing: 16) {
             ForEach(monitor.agentsByWorkspace, id: \.workspace.id) { group in
                 WorkspaceSection(workspace: group.workspace, agents: group.agents)
             }
@@ -122,33 +122,24 @@ private struct WorkspaceSection: View {
     let workspace: Workspace
     let agents: [Agent]
 
-    @Environment(\.colorScheme) private var scheme
-
-    /// Recessed rather than raised, so the rows still read as the content and
-    /// the section is only a boundary. Black in both themes, because tinting
-    /// with the foreground colour would lighten the dark one instead.
-    private var sectionFill: Color {
-        Color.black.opacity(scheme == .dark ? 0.20 : 0.045)
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(workspace.displayName)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 16)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 9) {
+                Text(workspace.displayName)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+                Rectangle()
+                    .fill(Color.primary.opacity(0.12))
+                    .frame(height: 1)
+            }
+            .padding(.horizontal, 16)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 ForEach(agents) { agent in
                     AgentRow(agent: agent)
                 }
             }
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 9)
-                    .fill(sectionFill)
-            )
-            .padding(.horizontal, 8)
         }
     }
 }
@@ -195,8 +186,9 @@ private struct AgentRow: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(hovering ? Color.primary.opacity(0.10) : .clear)
             )
-            // Inset within the section, not the panel.
-            .padding(.horizontal, 4)
+            // Inset so the hover highlight floats clear of the panel edges
+            // instead of running into them.
+            .padding(.horizontal, 8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
