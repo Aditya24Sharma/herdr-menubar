@@ -8,6 +8,13 @@ struct MenuContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            topBar
+
+            if showingSettings {
+                settingsPanel
+                Divider()
+            }
+
             if !monitor.isConnected { disconnectedNotice }
 
             if monitor.agents.isEmpty {
@@ -17,9 +24,6 @@ struct MenuContent: View {
             } else {
                 agentList
             }
-
-            Divider()
-            footer
         }
         .frame(width: 258)
     }
@@ -73,37 +77,41 @@ struct MenuContent: View {
             .padding(.vertical, 12)
     }
 
-    private var footer: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if showingSettings {
-                VStack(alignment: .leading, spacing: 6) {
-                    Toggle("Notify when an agent needs me", isOn: $settings.notifyOnBlocked)
-                    Toggle("Notify when an agent finishes", isOn: $settings.notifyOnDone)
-                    Toggle("Play a sound", isOn: $settings.playSound)
-                    Toggle("Launch at login", isOn: Binding(
-                        get: { settings.launchAtLogin },
-                        set: { settings.launchAtLogin = $0 }))
-                }
-                .toggleStyle(.checkbox)
-                .font(.system(size: 12))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                Divider()
-            }
-            HStack {
-                Button(showingSettings ? "Hide settings" : "Settings") {
-                    withAnimation(.easeInOut(duration: 0.12)) { showingSettings.toggle() }
-                }
-                Spacer()
-                Button("Quit") { NSApplication.shared.terminate(nil) }
+    private var topBar: some View {
+        HStack(spacing: 9) {
+            Spacer()
+            Button {
+                withAnimation(.easeInOut(duration: 0.12)) { showingSettings.toggle() }
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(showingSettings ? Color.primary : Color.secondary)
             }
             .buttonStyle(.plain)
-            .font(.system(size: 12))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .help("Settings")
             .pointerCursor()
+
+            QuitButton()
         }
+        .padding(.horizontal, 12)
+        .padding(.top, 9)
+        .padding(.bottom, 1)
+    }
+
+    private var settingsPanel: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Toggle("Notify when an agent needs me", isOn: $settings.notifyOnBlocked)
+            Toggle("Notify when an agent finishes", isOn: $settings.notifyOnDone)
+            Toggle("Play a sound", isOn: $settings.playSound)
+            Toggle("Launch at login", isOn: Binding(
+                get: { settings.launchAtLogin },
+                set: { settings.launchAtLogin = $0 }))
+        }
+        .toggleStyle(.checkbox)
+        .font(.system(size: 12))
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
     }
 }
 
@@ -264,4 +272,33 @@ private struct PointerCursor: ViewModifier {
 
 private extension View {
     func pointerCursor() -> some View { modifier(PointerCursor()) }
+}
+
+/// Quit, drawn like a window close button. The glyph only appears on hover, as
+/// the real ones do, and the tooltip says "quit" rather than "close" because
+/// this ends the app rather than dismissing the panel.
+private struct QuitButton: View {
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            NSApplication.shared.terminate(nil)
+        } label: {
+            Circle()
+                .fill(Color(nsColor: .systemRed))
+                .frame(width: 12, height: 12)
+                .overlay(
+                    Image(systemName: "xmark")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.black.opacity(hovering ? 0.55 : 0))
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help("Quit Herdr Menu Bar")
+        // Without this it inherits the xmark glyph and announces itself as
+        // "Close", which understates what the button does.
+        .accessibilityLabel("Quit Herdr Menu Bar")
+        .pointerCursor()
+    }
 }
