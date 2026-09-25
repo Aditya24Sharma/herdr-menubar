@@ -197,7 +197,6 @@ private struct AgentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help("\(agent.status.label) — click to jump to \(agent.paneID)")
         .pointerCursor()
     }
 }
