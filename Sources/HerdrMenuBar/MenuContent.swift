@@ -24,6 +24,7 @@ struct MenuContent: View {
                 // that walking up its superviews reaches the NSScrollView.
                 ScrollView { agentList.background(ThinScrollers()) }
                     .frame(height: Self.maxListHeight)
+                    .scrollIndicators(.never)
             } else {
                 agentList
             }
@@ -196,8 +197,8 @@ private struct AgentRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .pointerCursor()
         .help("\(agent.status.label) — click to jump to \(agent.paneID)")
+        .pointerCursor()
     }
 }
 
@@ -316,12 +317,21 @@ private struct ThinScrollers: NSViewRepresentable {
                 parent = current.superview
             }
             guard let scrollView = parent as? NSScrollView else { return }
+            // `.scrollIndicators(.never)` stops SwiftUI reserving a gutter for
+            // the scroller, which is what threw the side margins out. It also
+            // switches the scroller off, so it is put back by hand here — an
+            // overlay scroller floats above the content and costs no layout.
             scrollView.scrollerStyle = .overlay
             scrollView.autohidesScrollers = true
-            guard !(scrollView.verticalScroller is ThinScroller) else { return }
-            let scroller = ThinScroller()
-            scroller.scrollerStyle = .overlay
-            scrollView.verticalScroller = scroller
+            if !(scrollView.verticalScroller is ThinScroller) {
+                let scroller = ThinScroller()
+                scroller.scrollerStyle = .overlay
+                scrollView.verticalScroller = scroller
+            }
+            scrollView.hasVerticalScroller = true
+            scrollView.verticalScroller?.isHidden = false
+            scrollView.verticalScroller?.alphaValue = 1
+            scrollView.reflectScrolledClipView(scrollView.contentView)
         }
     }
 }
