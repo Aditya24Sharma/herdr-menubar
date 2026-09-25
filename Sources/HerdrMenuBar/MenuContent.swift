@@ -109,6 +109,7 @@ struct MenuContent: View {
             Toggle("Launch at login", isOn: Binding(
                 get: { settings.launchAtLogin },
                 set: { settings.launchAtLogin = $0 }))
+
         }
         .toggleStyle(.checkbox)
         .font(.system(size: 12))

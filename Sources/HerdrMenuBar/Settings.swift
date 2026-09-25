@@ -9,6 +9,7 @@ final class Settings: ObservableObject {
     @AppStorage("notifyOnDone") var notifyOnDone = false
     @AppStorage("playSound") var playSound = false
 
+
     /// Reflects the real login-item state rather than a stored copy, so it stays
     /// correct if the user changes it in System Settings.
     var launchAtLogin: Bool {
