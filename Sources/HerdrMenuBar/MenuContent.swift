@@ -82,6 +82,7 @@ struct MenuContent: View {
 
     private var topBar: some View {
         HStack(spacing: 9) {
+            QuitButton()
             Spacer()
             Button {
                 withAnimation(.easeInOut(duration: 0.12)) { showingSettings.toggle() }
@@ -93,8 +94,6 @@ struct MenuContent: View {
             .buttonStyle(.plain)
             .help("Settings")
             .pointerCursor()
-
-            QuitButton()
         }
         .padding(.horizontal, 12)
         .padding(.top, 9)
