@@ -20,7 +20,10 @@ struct MenuContent: View {
             if monitor.agents.isEmpty {
                 if monitor.isConnected { emptyState }
             } else if monitor.agents.count > Self.scrollThreshold {
-                ScrollView { agentList }.frame(height: Self.maxListHeight)
+                // The styler has to live inside the scroll view's content, so
+                // that walking up its superviews reaches the NSScrollView.
+                ScrollView { agentList.background(ThinScrollers()) }
+                    .frame(height: Self.maxListHeight)
             } else {
                 agentList
             }
@@ -295,5 +298,39 @@ private struct QuitButton: View {
         // "Close", which understates what the button does.
         .accessibilityLabel("Quit Herdr Menu Bar")
         .pointerCursor()
+    }
+}
+
+/// Forces the dropdown's scroller to the thin overlay style.
+///
+/// SwiftUI has no API for scroller width, and a system set to "Show scroll bars:
+/// Always" gives the wide legacy scroller, which is heavy in a panel this
+/// narrow. This reaches the enclosing NSScrollView to set the style directly.
+private struct ThinScrollers: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView { NSView(frame: .zero) }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        DispatchQueue.main.async {
+            var parent = view.superview
+            while let current = parent, !(current is NSScrollView) {
+                parent = current.superview
+            }
+            guard let scrollView = parent as? NSScrollView else { return }
+            scrollView.scrollerStyle = .overlay
+            scrollView.autohidesScrollers = true
+            guard !(scrollView.verticalScroller is ThinScroller) else { return }
+            let scroller = ThinScroller()
+            scroller.scrollerStyle = .overlay
+            scrollView.verticalScroller = scroller
+        }
+    }
+}
+
+/// Scroller width is fixed by the class, not by any instance property, so a
+/// narrower one means overriding it here.
+private final class ThinScroller: NSScroller {
+    override class func scrollerWidth(for controlSize: NSControl.ControlSize,
+                                      scrollerStyle: NSScroller.Style) -> CGFloat {
+        8
     }
 }
