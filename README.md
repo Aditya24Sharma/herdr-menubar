@@ -5,18 +5,22 @@ session. Click an agent to jump straight to its pane.
 
 ## What it does
 
-- A robot head in the menu bar, carrying a small dot at its top right for the
-  most urgent state present. The dot encodes state in shape as well as colour,
-  so the states stay apart without relying on colour vision: a filled dot means
-  an agent is waiting on you (red, and larger), has finished (green), or is
-  working (accent); a faint hollow ring means everything is idle; and no dot at
-  all, with the head dimmed, means Herdr is unreachable.
-- A dropdown listing every agent grouped by workspace, most urgent first,
-  including idle and working ones. State is carried visually rather than in
-  text — a turning spinner while an agent works, a red dot when it wants you, a
-  green dot when it has finished, and a faded row when it is idle — so the
-  width goes to names and directories instead. Hover a row to read its state.
-  The header stays bare unless Herdr becomes unreachable, which it says.
+- A monochrome robot head in the menu bar, drawn in the menu bar's own text
+  colour so it sits quietly among the system icons. It shows the most urgent
+  state present through shape and motion rather than colour: an outlined head
+  when everything is idle, a filled head with its ears circling the face while
+  an agent works, a filled head that hops when an agent is waiting on you, and
+  a filled head with a check punched through it when an agent has finished.
+  When Herdr is unreachable the icon looks idle; the dropdown says why. With
+  Reduce Motion on the icon holds still, so working and waiting look the same.
+- A dropdown listing every agent grouped by workspace, in Herdr's own
+  workspace and pane order, including idle and working ones. The order never
+  changes with state, so the row under your cursor stays put. State is carried
+  visually rather than in text — a turning spinner while an agent works, a
+  larger red dot when it wants you, a green dot when it has finished, and a
+  faded row when it is idle — so the width goes to names and directories
+  instead. The header stays bare unless Herdr becomes unreachable, which it
+  says.
 - Clicking an agent focuses its pane in Herdr and brings the hosting terminal
   to the front.
 - A desktop notification when an agent becomes blocked, with toggles for
@@ -73,6 +77,19 @@ are working, because agent terminal titles animate.
 Event names are spelled inconsistently: lifecycle events arrive as
 `pane_updated`, while subscription-generated ones arrive as
 `pane.agent_status_changed`. The handler normalises both.
+
+## Code layout
+
+Sources live under `Sources/HerdrMenuBar`, and each layer only uses the ones
+below it.
+
+- `App` — the entry point, which wires everything together at launch.
+- `UI` — the menu bar icon and the dropdown's SwiftUI views.
+- `State` — `HerdrMonitor`, the live agent list, and the rules for when to notify.
+- `Services` — the typed Herdr client, notifications, settings, and raising the terminal.
+- `Transport` — the line-delimited Unix socket connection to Herdr.
+- `Models` — plain data types: agents, workspaces, statuses.
+- `Support` — logging and executable lookup, usable from any layer.
 
 ## Debugging
 
