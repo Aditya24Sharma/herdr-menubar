@@ -7,7 +7,7 @@ An unofficial companion app, not affiliated with the Herdr project.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
-  <img alt="The Herdr Menu Bar dropdown listing agents grouped by workspace" src="docs/screenshot-light.png" width="560">
+  <img alt="The Herdr Menu Bar dropdown listing agents grouped by workspace" src="docs/screenshot-light.png" width="378">
 </picture>
 
 ## Features
