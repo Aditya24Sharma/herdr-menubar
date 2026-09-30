@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>Herdr Menu Bar</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.herdr.menubar</string>
+    <string>io.github.aditya24sharma.herdr-menubar</string>
     <key>CFBundleExecutable</key>
     <string>HerdrMenuBar</string>
     <key>CFBundlePackageType</key>
