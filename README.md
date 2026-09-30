@@ -3,6 +3,13 @@
 A macOS menu bar app that shows the live state of every agent in your
 [Herdr](https://github.com/herdrdev/herdr) session. Click an agent to jump to its pane.
 
+An unofficial companion app, not affiliated with the Herdr project.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="The Herdr Menu Bar dropdown listing agents grouped by workspace" src="docs/screenshot-light.png" width="378">
+</picture>
+
 ## Features
 
 - **Menu bar icon** that reflects the most urgent agent state: idle, working,
